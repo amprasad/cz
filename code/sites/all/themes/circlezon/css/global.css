@@ -1,0 +1,172 @@
+/* This file will hold styles for the mobile version of your website (mobile first). */
+/* This also can include ANY global CSS that applies site-wide.
+Unless overwritten by a more specific style rule, CSS declarations in global.css will apply site-wide. */
+nav.navigation {
+	float: right;
+	position: absolute;
+	right: 0;
+	top: 30px;
+	width: 50%;
+	z-index:1;
+} 
+
+#node-page-1 {
+  border:1px solid #ccc;
+  padding:10px; 
+  margin-top:10px;
+  margin-bottom:10px; 
+} 
+
+#block-invite-invite  {
+    margin-bottom:15px; 
+} 
+
+#section-header{
+    height: 75px;
+    background: url('../images/bg-header.png') repeat-x center transparent;
+    position: relative;
+}
+#section-header .logo-img img{
+    margin-top: -1px;
+}
+#zone-header{
+    position: relative;
+}
+#block-search-form{
+    left: 200px;
+    position: absolute;
+    top: -58px;
+}
+#block-search-form .form-text{
+    background: url("../images/bg-search.png") repeat-x scroll center center transparent;
+    border-bottom: 1px solid #275370;
+    border-radius: 20px 20px 20px 20px;
+    border-top: 1px solid #85B7CE;
+    height: 34px;
+    width: 350px;
+}
+#block-search-form .form-submit{
+    background: url("../images/btn_search.png") repeat-x scroll center center #FFFFFF;
+    border: medium none;
+    border-radius: 0 0 0 0;
+    position: absolute;
+    right: 4px;
+    text-indent: -99999px;
+    top: 5px;
+}
+#zone-content{
+    width:100%;
+    margin: 0;
+}
+#region-sidebar-first{
+     background: url("../images/bg-slide-bar.png") repeat-y scroll center center transparent;
+    border-right: 1px solid #C2C2C2;
+    box-shadow: 1px -1px 3px #C2C2C2;
+    margin: 0;
+}
+#region-sidebar-first h2.block-title{
+    color: #0875C7;
+    font-size: 18px;
+    font-weight: normal;
+    margin: 0;
+    padding: 10px;
+    background: url("../images/bg-slider-bar-header.png") repeat-x scroll center center transparent;
+    border-top:1px solid #cfcfcf;
+    border-bottom: 1px solid #cfcfcf;
+}
+#region-sidebar-first .block .content{
+    padding: 10px;
+}
+#zone-preface-wrapper{
+    display:none;
+}
+#section-content{
+    background: url("../images/bg-top-content.png") repeat-x scroll center top transparent;
+}
+#section-footer{
+    background: url("../images/bg-footer.png") repeat-x scroll center top transparent;
+}
+#zone-menu{
+    position: absolute;
+    left: 200px;
+    position: absolute;
+}
+#block-menu-menu-menu-top{
+    height: 70px;
+    text-align: center;
+}
+#block-menu-menu-menu-top ul.menu{
+    list-style: none outside none;
+    margin-left: 135px;
+    margin-top: 25px;
+}
+#block-menu-menu-menu-top ul.menu li{
+    float:left;
+    list-style: none;
+    margin-right: 10px;
+}
+#block-menu-menu-menu-top ul.menu li a{
+    color:#404040 !important;
+    text-decoration: none;
+} 
+#block-block-9{
+    margin-top: 50px;
+}
+a{
+    text-decoration: none !important;
+    
+}
+
+#block-block-10{
+    position: absolute;
+    top: 0;
+    z-index: 99;
+}
+#block-block-10.show{
+    right: -52px;
+}
+#block-block-10.hide{
+    left: -10px;
+}
+#block-block-10 .content a{
+    display: block;
+    cursor: pointer;
+}
+
+/*front css.. */
+.front #zone-branding-wrapper {
+  display:none; 
+}
+.front #zone-header-wrapper {
+  display:none; 
+}
+.front #zone-menu-wrapper {
+  
+}
+.front #section-header {
+  
+  background: url("../images/front-head-bg.png") repeat-x scroll center center transparent;
+  color:black;  
+  height:32px; 
+}
+.front #section-header a{
+  color:black !important;
+}
+.front nav.navigation{
+  top:5px; 
+} 
+
+.page-user #region-sidebar-first, .page-user #breadcrumb, .page-user  #region-content .tabs, .page-user  #region-content .block-menu-menu-menu-top  {
+  display:none; 
+} 
+.page-user #block-block-8 {
+  display:none; 
+} 
+#main-menu li a {
+  color:white; 
+} 
+#connector-button-form .connector-button-wrapper {
+  float:left; 
+  margin-right:10px; 
+} 
+

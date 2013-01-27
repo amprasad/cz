@@ -1,0 +1,525 @@
+<?php 
+
+function cz_custom_init() {
+  global $user; 
+  
+}
+
+ function cz_custom_menu() {
+    $items['oimport/linkedin'] = array(
+      'title' => 'Import from Linked-in',
+      'page callback' => 'cz_custom_import_from_linkedin',
+      'access arguments' => array('access content'), 
+      'type' => MENU_CALLBACK,
+    );
+
+    $items['user/%user/icontacts'] = array( 
+      'title' => 'My Contacts',
+      'page callback' => 'user_card_page',
+      'page arguments' => array(1),
+      'access callback' => 'user_view_access',
+      'access arguments' => array(1),
+      // By assigning a different menu name, this item (and all registered child
+      // paths) are no longer considered as children of 'user'. When accessing the
+      // user account pages, the preferred menu link that is used to build the
+      // active trail (breadcrumb) will be found in this menu (unless there is
+      // more specific link), so the link to 'user' will not be in the breadcrumb.
+      'type' => MENU_LOCAL_TASK,
+    ); 
+    
+    $items['oimport/facebook'] = array(
+      'title' => 'Import from Facebook',
+      'page callback' => 'cz_custom_import_from_facebook',
+      'access arguments' => array('access content'), 
+      'type' => MENU_CALLBACK,
+    );
+
+
+    $items['oimport/google'] = array(
+      'title' => 'Import from Google',
+      'page callback' => 'cz_custom_import_from_gmail',
+      'access arguments' => array('access content'), 
+      'type' => MENU_CALLBACK,
+    ); 
+  
+    return $items;
+  }
+
+function cz_custom_import_from_facebook() {
+   global $user; 
+   
+    $out = ''; 
+     
+    $out .= ''; 
+    $provider = oauthconnector_provider_load('facebook');
+    $csid = $provider->csid; 
+     
+     $result = db_query("SELECT * FROM {oauth_common_token} WHERE uid = :uid AND type = :type and csid = :csid", array(
+        ':uid' => $user->uid,
+        ':type' => OAUTH_COMMON_TOKEN_TYPE_ACCESS,
+        ':csid' => $provider->csid,
+      )); 
+      
+      $tokens = array(); 
+      while ($token = DrupalOAuthToken::fromResult($result)) {
+        $tokens[] = $token;
+      }
+     
+    // echo '<pre>';
+    
+    // print_r($tokens); 
+    $ltoken = $tokens[0]; // print_r( $ltoken); 
+    if($ltoken)  { 
+
+     $consumer = $ltoken->consumer;
+    
+    $method='GET'; 
+    
+    // print_r($provider);  
+    $org_info = cz_oauthconnector_endpoint_call(
+          'https://graph.facebook.com/me/friends', // ?limit=5000 
+          array('limit'=>5000),
+          $provider,
+          $ltoken,
+          $method,
+            'json'
+      ); 
+
+      $ic = 0;  
+      // http://developer.linkedin.com/documents/reading-data#toggleview:id=php  
+      // print_r($org_info['data']); // array 
+      if( $org_info['data'] && is_array($org_info['data']) )  {
+        
+        foreach($org_info['data'] as $conn) { 
+          $friendid = $conn['id']; 
+          $udata = cz_oauthconnector_endpoint_call(
+              'https://graph.facebook.com/'.$friendid, // ?limit=5000 
+              array(),
+              $provider,
+              $ltoken,
+              $method,
+              'json'
+          ); 
+          
+          if($udata) {
+            
+          //print_r($udata); // break;  
+          $providername = 'facebook'; 
+          $created = time(); 
+          $uid = $user->uid; 
+
+          $firstname  =  $udata['first_name']; 
+          $lastname = $udata['last_name']; 
+          $fullname = $udata['name'];  
+          $username = $udata['username']; 
+          $email = ''; 
+          $address = ''; 
+          $country = ''; 
+          $organization = ''; 
+          $phone = ''; 
+          $picture = ''; 
+          $profileid = $udata['id'];  
+          $profileurl = $udata['link']; 
+          $gender = $udata['gender']; 
+          $industry = ''; 
+          $headline = '';                 
+          
+          // check if profileid and provider doesnt exist 
+          if( (bool) db_select('cz_card')->fields('cz_card', array('id'))->condition('profileid', $udata['id'], '=')->condition('provider','facebook', '=')->range(0, 1)->execute()->fetchField() ) { 
+            // profile already exist.. 
+
+          } else { 
+            
+            $rs = db_query("insert into {cz_card} ( `firstname`, `lastname`, `fullname`, `username`, `email`, `address`, `country`, `organization`, `phone`, `picture`, `profileid`, `profileurl`, `gender`, `industry`, `headline`, `created`, provider, uid) VALUES (:firstname, :lastname, :fullname, :username, :email, :address, :country, :organization, :phone, :picture, :profileid, :profileurl, :gender, :industry, :headline, :created, :provider, :uid)  ", array(':firstname'=>$firstname, ':lastname'=>$lastname, ':fullname'=>$fullname, ':username'=>$username, ':email'=>$email, ':address'=>$address, ':country'=>$country, ':organization'=>$organization, ':phone'=>$phone, ':picture'=>$picture, ':profileid'=>$profileid, ':profileurl'=>$profileurl, ':gender'=>$gender, ':industry'=>$industry, ':headline'=>$headline, ':created'=>$created, ':provider'=>$providername, ':uid'=>$uid) ); 
+            if($rs) {
+              $ic++; 
+            } 
+          }
+          } // end udata 
+
+
+        } 
+
+        $out .= $ic.' unique contacts imported.' ;
+        
+      } 
+            
+    } else { 
+      $out .= 'Account is not connnected..';
+    } 
+  
+  $out .= '<br/>'.l('View Imported Contacts', 'user/'.$user->uid.'/icontacts'); 
+
+  return $out; 
+} 
+
+function cz_custom_import_from_linkedin() {
+    // ...
+    global $user; 
+
+    $out = '';
+
+    $out .= ''; 
+    
+     $result = db_query("SELECT * FROM {oauth_common_token} WHERE uid = :uid AND type = :type", array(
+        ':uid' => $user->uid,
+        ':type' => OAUTH_COMMON_TOKEN_TYPE_ACCESS,
+      ));
+      $tokens = array();
+      while ($token = DrupalOAuthToken::fromResult($result)) {
+        $tokens[] = $token;
+      }
+     
+    //echo '<pre>'; 
+    // print_r($tokens); 
+    $ltoken = $tokens[0]; 
+    // print_r( $ltoken); 
+    if($ltoken)  { 
+   $consumer = $ltoken->consumer;
+    $provider = oauthconnector_provider_load('linkedin');
+    $method='GET'; 
+     //print_r($provider); 
+    $org_info = cz_oauthconnector_endpoint_call(
+          'https://api.linkedin.com/v1/people/~/connections',
+          array('format'=>'json'),
+          $provider,
+          $ltoken,
+          $method
+      ); 
+
+      $ic = 0; 
+       // http://developer.linkedin.com/documents/reading-data#toggleview:id=php  
+      $ldata = drupal_json_decode($org_info); 
+      if( $ldata && $ldata['_total'] ) {         
+
+        if( is_array($ldata['values']) && count($ldata['values']) > 0 ) {
+          foreach($ldata['values'] as $udata ) { 
+
+            if($udata) {
+              
+              //print_r($udata); // break;  
+              $providername = 'linkedin'; 
+              $created = time(); 
+              $uid = $user->uid; 
+              
+              $firstname  =  $udata['firstName']; 
+              $lastname = $udata['lastName']; 
+              $fullname = $udata['firstName'].' '.$udata['lastName'];  
+              $username = '';  
+              $email = ''; 
+              $address = isset($udata['location']['name']) ? $udata['location']['name'] : ''; 
+              $country = isset($udata['location']['country']['code']) ? $udata['location']['country']['code'] : ''; 
+              $organization = ''; 
+              $phone = ''; 
+              $picture = isset($udata['pictureUrl']) ? $udata['pictureUrl'] : ''; 
+              $profileid = $udata['id']; 
+              $profileurl = isset($udata['siteStandardProfileRequest']['url']) ? $udata['siteStandardProfileRequest']['url'] : ''; 
+              //isset($udata['apiStandardProfileRequest']['url']) ? $udata['apiStandardProfileRequest']['url'] : (); 
+              $gender = ''; 
+              $industry = isset($udata['industry']) ? $udata['industry'] : ''; 
+              $headline = ''; 
+              
+              // check if profileid and provider doesnt exist 
+              if( (bool) db_select('cz_card')->fields('cz_card', array('id'))->condition('profileid', $udata['id'], '=')->condition('provider','linkedin', '=')->range(0, 1)->execute()->fetchField() ) { 
+                // profile already exist.. 
+                
+              } else { 
+                
+                $rs = db_query("insert into {cz_card} ( `firstname`, `lastname`, `fullname`, `username`, `email`, `address`, `country`, `organization`, `phone`, `picture`, `profileid`, `profileurl`, `gender`, `industry`, `headline`, `created`, provider, uid) VALUES (:firstname, :lastname, :fullname, :username, :email, :address, :country, :organization, :phone, :picture, :profileid, :profileurl, :gender, :industry, :headline, :created, :provider, :uid)  ", array(':firstname'=>$firstname, ':lastname'=>$lastname, ':fullname'=>$fullname, ':username'=>$username, ':email'=>$email, ':address'=>$address, ':country'=>$country, ':organization'=>$organization, ':phone'=>$phone, ':picture'=>$picture, ':profileid'=>$profileid, ':profileurl'=>$profileurl, ':gender'=>$gender, ':industry'=>$industry, ':headline'=>$headline, ':created'=>$created, ':provider'=>$providername, ':uid'=>$uid) ); 
+                if($rs) {
+                  $ic++; 
+                } 
+              }
+          } // end udata
+
+          } 
+        }
+      }
+      
+      $out .= $ic.' unique contacts imported.' ; 
+
+    } 
+
+    $out .= '<br/>'.l('View Imported Contacts', 'user/'.$user->uid.'/icontacts'); 
+
+    return $out; 
+
+}
+
+
+function cz_custom_import_from_gmail() {
+   global $user;
+
+    $out = '';
+     
+    $out .= ''; 
+    $provider = oauthconnector_provider_load('google');
+    $csid = $provider->csid;
+
+     $result = db_query("SELECT * FROM {oauth_common_token} WHERE uid = :uid AND type = :type and csid = :csid", array(
+        ':uid' => $user->uid,
+        ':type' => OAUTH_COMMON_TOKEN_TYPE_ACCESS,
+        ':csid' => $provider->csid,
+      )); 
+
+      $tokens = array(); 
+      while ($token = DrupalOAuthToken::fromResult($result)) {
+        $tokens[] = $token;
+      }
+     
+    // echo '<pre>'; 
+    // print_r($tokens); 
+    $ltoken = $tokens[0]; // print_r( $ltoken); 
+    if($ltoken)  { 
+
+     $consumer = $ltoken->consumer;
+    
+    $method='GET'; 
+
+    //print_r($provider); 
+    $org_info = cz_oauthconnector_endpoint_call(
+          'https://www.google.com/m8/feeds/contacts/default/full',
+          array(),
+          $provider,
+          $ltoken,
+          $method
+      ); 
+      
+      // http://developer.linkedin.com/documents/reading-data#toggleview:id=php
+      // echo $org_info; 
+      //https://www.google.com/m8/feeds/contacts/{userEmail}/full/{contactId} 
+
+      $doc = new DOMDocument;
+      $doc->recover = true;
+      $doc->loadXML($org_info);
+
+      $xpath = new DOMXPath($doc);
+      $xpath->registerNamespace('gd', 'http://schemas.google.com/g/2005');
+
+      $emails = $xpath->query('//gd:email');
+      $carray = array(); 
+      $ic = 0; 
+
+      foreach ( $emails as $email )
+      {
+        $cemail =  $email->getAttribute('address');
+        
+        // To get the title.
+        // This could also be done using XPath.
+        // You can also use ->nodeValue instead of ->textContent.
+         $fname = $email->parentNode->getElementsByTagName('title')->item(0)->textContent;
+         
+         $carray[$cemail] = $fname; 
+         
+         if($cemail) {
+                        
+          //print_r($udata); // break;  
+          $providername = 'google'; 
+          $created = time(); 
+          $uid = $user->uid; 
+
+          $firstname  =  $fname; 
+          $lastname = ''; 
+          $fullname = $fname;  
+          $username = '';  
+          $email = $cemail; 
+          $address = ''; 
+          $country = ''; 
+          $organization = ''; 
+          $phone = ''; 
+          $picture = ''; 
+          $profileid = $cemail;  
+          $profileurl = '';  
+          $gender = ''; 
+          $industry = ''; 
+          $headline = '';                 
+          
+          // check if profileid and provider doesnt exist 
+          if( (bool) db_select('cz_card')->fields('cz_card', array('id'))->condition('profileid', $cemail, '=')->condition('provider','google', '=')->range(0, 1)->execute()->fetchField() ) { 
+            // profile already exist.. 
+
+          } else { 
+            
+            $rs = db_query("insert into {cz_card} ( `firstname`, `lastname`, `fullname`, `username`, `email`, `address`, `country`, `organization`, `phone`, `picture`, `profileid`, `profileurl`, `gender`, `industry`, `headline`, `created`, provider, uid) VALUES (:firstname, :lastname, :fullname, :username, :email, :address, :country, :organization, :phone, :picture, :profileid, :profileurl, :gender, :industry, :headline, :created, :provider, :uid)  ", array(':firstname'=>$firstname, ':lastname'=>$lastname, ':fullname'=>$fullname, ':username'=>$username, ':email'=>$email, ':address'=>$address, ':country'=>$country, ':organization'=>$organization, ':phone'=>$phone, ':picture'=>$picture, ':profileid'=>$profileid, ':profileurl'=>$profileurl, ':gender'=>$gender, ':industry'=>$industry, ':headline'=>$headline, ':created'=>$created, ':provider'=>$providername, ':uid'=>$uid) ); 
+
+            if($rs) {
+              $ic++; 
+            } 
+          }
+          } // end udata 
+
+      } 
+
+      $out .= $ic.' unique contacts imported.' ; 
+      
+      //print_r($carray);  
+
+      // Call the API with the parameter "alt=json" You will get results in Json format 
+
+      // $dom = new DomDocument();
+      // $dom->loadXML($org_info); 
+      // echo $dom->saveXML(); 
+      
+    } else {
+      $out .= 'Account is not connnected..';
+    } 
+  
+
+  $out .= '<br/>'.l('View Imported Contacts', 'user/'.$user->uid.'/icontacts'); 
+ 
+ return $out; 
+
+} 
+
+/**
+ * Endpoint Call.
+ *
+ * Use this to post on twitter, get a profile, search in Facebook... and many more.
+ * You need a $provider, and a access token, that is it... supports both oauth and oauth2.
+ */
+function cz_oauthconnector_endpoint_call($endpoint, $params=array(), $provider, $access_token, $method='GET', $format='RAW') {
+  $consumer = DrupalOAuthConsumer::loadById($provider->csid, FALSE); 
+  $auth = NULL;
+
+  if (!$consumer->configuration['oauth2']) {
+    $sig_method = DrupalOAuthClient::signatureMethod(substr(strtolower($provider->consumer_advanced['signature method']), 5));
+    $realm = empty($provider->consumer_advanced['authentication realm']) ? NULL : $provider->consumer_advanced['authentication realm'];
+    $auth = new HttpClientOAuth($consumer, $access_token, $sig_method, TRUE, TRUE, $realm);
+  }
+  if ($consumer->configuration['oauth2'] && isset($access_token->key)) {
+    $params['access_token'] = $access_token->key;
+  }
+  $data = NULL;
+  if (isset($params['post_data'])) {
+    $data = $params['post_data'];
+    unset ($params['post_data']);
+  }
+
+  switch (strtolower($format)) {
+    case 'xml':
+      $formatter = new HttpClientXMLFormatter();
+      break;
+    case 'php':
+      $formatter = new HttpClientBaseFormatter(HttpClientBaseFormatter::FORMAT_PHP);
+      break;
+    case 'json':
+      $formatter = new HttpClientBaseFormatter(HttpClientBaseFormatter::FORMAT_JSON);
+      break;
+    default:
+      $formatter = NULL;
+      break;
+  }
+  $client = new HttpClient($auth, $formatter);
+  $return = NULL;
+  ///print_r($params); 
+  try {
+    if (strtolower($method) == 'get' || strtolower($method) == 'delete') {
+      $return = $client->{strtolower($method)}($endpoint, $params);
+    }
+    elseif (strtolower($method) == 'post' || strtolower($method) == 'put') {
+      $return = $client->{strtolower($method)}($endpoint, $data, $params);
+    }
+  }
+  catch (Exception $e) {
+    if (is_a($e, 'HttpClientException')) {
+      if ($e->getCode() == 401) {
+        //TODO: Save the failure in some way so that we can stop trying to use a revoked token?
+        watchdog('oauthconnector_endpoint_call', "User !uid not authenticated for %resource: @message", array(
+          '!uid' => isset($access_token->uid) ? $access_token->uid : '\'undefined\'',
+          '%resource' => $endpoint,
+          '@message' => $e->getMessage(),
+        ), WATCHDOG_WARNING);
+      }
+      elseif ($e->getCode() == 400) {
+        watchdog('oauthconnector_endpoint_call', "Bad request of %resource: @message", array(
+          '%resource' => $endpoint,
+          '@message' => $e->getMessage(),
+        ), WATCHDOG_ERROR);
+      }
+    }
+    else {
+      watchdog('oauthconnector_endpoint_call', 'Failed to fetch of %resource: @message', array(
+        '%resource' => $endpoint,
+        '@message' => $e->getMessage(),
+      ), WATCHDOG_WARNING);
+    }
+  }
+  return $return;
+}
+
+function user_card_page ($account) {
+  return is_object($account) ? card_view($account) : MENU_NOT_FOUND;
+}
+
+function card_view($account) {
+  $out = '';
+  
+  //@todo  cz_card  
+  $query = db_select('cz_card', 'cz');
+  $query->condition('cz.uid', $account->uid, '=');
+  
+  $header = array(
+    'fullname' => array('data' => t('Name'), 'field' => 'cz.fullname'),
+    'profileurl' => array('data' => t('URL'), 'field' => 'cz.profileurl'), 
+    'member_for' => array('data' => t('Added'), 'field' => 'cz.created', 'sort' => 'desc'),
+    'operations' => array('data' => t('Operations')),
+  ); 
+  
+  $count_query = clone $query;
+  $count_query->addExpression('COUNT(cz.id)');
+  
+  $query = $query->extend('PagerDefault')->extend('TableSort');
+  $query
+    ->fields('cz', array('id', 'fullname', 'profileurl', 'created'))
+    ->limit(50)
+    ->orderByHeader($header)
+    ->setCountQuery($count_query); 
+  $result = $query->execute();
+  $rows = array(); 
+   foreach ($result as $account) { 
+     $rows[] = array($account->fullname, $account->profileurl, format_interval(REQUEST_TIME - $account->created), '');      
+   } 
+  
+  $out .= theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => 'user_card'))); 
+  
+  $out .= theme('pager');
+
+  return $out; 
+} 
+
+/**
+ * Implements hook_block_info().
+ */
+function cz_custom_block_info() { 
+  $block['cz_import']['info'] = t('Import Contacts'); 
+  
+  return $block;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function cz_custom_block_view($delta) {
+  global $user;
+  
+  switch ($delta) {
+    case 'cz_import':
+      if ($user->uid) { 
+        $importbtn = ''; 
+        
+        // find all providers ... 
+        $result = db_query("SELECT p.name FROM {oauth_common_token} t left join {oauthconnector_provider} p on t.csid = p.csid WHERE t.uid = :uid AND t.type = :type ", array( ':uid' => $user->uid, ':type' => OAUTH_COMMON_TOKEN_TYPE_ACCESS )); 
+          foreach ($result as $record) { 
+            $importbtn .= l('Import from '.$record->name, 'oimport/'.$record->name)."<br/>"; 
+          } 
+          
+          return array(
+            'content' => $importbtn, 
+          );
+        
+      } 
+
+      break;
+  }
+
+}
