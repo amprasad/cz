@@ -169,4 +169,62 @@ a{
   float:left; 
   margin-right:10px; 
 } 
+.oauthconnector-facebook input{
+    background: url("../images/social-icons.gif") repeat scroll -8px -1px transparent;
+    border-radius: 5px 5px 5px 5px;
+    color: transparent;
+    height: 32px;
+    text-shadow: 0 0;
+    width: 200px;
+    margin-bottom:10px;
+}
 
+.oauthconnector-twitter input {
+    background: url("../images/social-icons.gif") repeat scroll 2px -101px transparent;
+    border: 0 none;
+    border-radius: 0 0 0 0;
+    color: transparent;
+    height: 17px;
+    text-shadow: 0 0;
+    width: 0;
+}
+.oauthconnector-linkedin input {
+    background: url("../images/linkedin1.jpg") no-repeat scroll transparent;
+    border: 0 none;
+    border-radius: 0 0 0 0;
+    color: transparent;
+    height: 17px;
+    text-shadow: 0 0;
+    width: 0;
+}
+.oauthconnector-google input {
+    background: url("../images/social-icons.gif") repeat scroll 3px -71px transparent;
+    border: 0 none;
+    border-radius: 0 0 0 0;
+    color: transparent;
+    height: 17px;
+    text-shadow: 0 0;
+    width: 0;
+}
+form#user-login div#edit-actions input{
+    background: url("../images/social-icons.gif") repeat scroll -49px 142px transparent;
+    border: 0 none;
+    border-radius: 0 0 0 0;
+    color: transparent;
+    height: 29px;
+    text-shadow: 0 0;
+    width: 102px;
+}
+form#user-register-form div#edit-actions input{
+    background: url("../images/social-icons.gif") repeat scroll -49px 92px transparent;
+    border: 0 none;
+    border-radius: 0 0 0 0;
+    color: transparent;
+    height: 29px;
+    text-shadow: 0 0;
+    width: 142px;
+}
+form#connector-button-form div{
+width:205px;
+float:left;
+}
