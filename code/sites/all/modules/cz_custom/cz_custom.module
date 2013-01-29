@@ -56,10 +56,122 @@ function cz_custom_user_page_title() {
       'page callback' => 'cz_custom_import_from_gmail',
       'access arguments' => array('access content'), 
       'type' => MENU_CALLBACK,
+    );
+    
+    $items['oimport/twitter'] = array(
+      'title' => 'Import from Twitter',
+      'page callback' => 'cz_custom_import_from_twitter',
+      'access arguments' => array('access content'), 
+      'type' => MENU_CALLBACK, 
     ); 
-  
+    
     return $items;
-  }
+}
+
+function cz_custom_import_from_twitter() {
+  
+   global $user; 
+   
+    $out = ''; 
+     // delete existing of this user .. 
+    db_query("delete from {cz_card} where uid = :uid and provider = :provider", array(':provider'=>'twitter', ':uid' => $user->uid)); 
+    
+    $out .= ''; 
+    $provider = oauthconnector_provider_load('twitter');
+    $csid = $provider->csid; 
+     
+     $result = db_query("SELECT * FROM {oauth_common_token} WHERE uid = :uid AND type = :type and csid = :csid", array(
+        ':uid' => $user->uid,
+        ':type' => OAUTH_COMMON_TOKEN_TYPE_ACCESS,
+        ':csid' => $provider->csid,
+      )); 
+      
+      $tokens = array(); 
+      while ($token = DrupalOAuthToken::fromResult($result)) {
+        $tokens[] = $token;
+      }
+     
+    // echo '<pre>';
+    
+    // print_r($tokens); 
+    $ltoken = $tokens[0]; // print_r( $ltoken); 
+    if($ltoken)  { 
+
+     $consumer = $ltoken->consumer;
+    
+    $method='GET'; 
+    
+    // print_r($provider);  
+    $org_info = cz_oauthconnector_endpoint_call(
+          'https://api.twitter.com/1.1/friends/list.json', // ?limit=5000 
+          array('include_user_entities'=>true, 'skip_status'=>true, 'cursor'=>-1),
+          $provider,
+          $ltoken,
+          $method,
+            'json'
+      ); 
+      
+      $ic = 0;  
+      // http://developer.linkedin.com/documents/reading-data#toggleview:id=php  
+      //print_r($org_info); // array 
+      if( $org_info['users'] && is_array($org_info['users']) && count($org_info['users']) > 0 )  { // 
+        
+        foreach($org_info['users'] as $conn) { 
+          $friendid = $conn['id']; 
+          
+          if($friendid) {
+            $udata = $conn; 
+
+          //print_r($udata); // break;  
+          $providername = 'twitter'; 
+          $created = time(); 
+          $uid = $user->uid; 
+          
+          $firstname  =  isset($udata['name']) ? $udata['name'] : ''; 
+          $lastname = ''; 
+          $fullname = isset( $udata['name']) ? $udata['name'] : '';  
+          $username = isset($udata['screen_name']) ? $udata['screen_name'] : ''; 
+          $email = ''; 
+          $address = isset($udata['location']) ? $udata['location'] : '';   
+          $country = ''; 
+          $organization = ''; 
+          $phone = ''; 
+          $picture = isset($udata['profile_image_url']) ? $udata['profile_image_url'] : ''; 
+          $profileid = isset($udata['id']) ? $udata['id'] : '';  
+          $profileurl = isset($udata['url']) ? $udata['url'] : ''; 
+          $gender = isset($udata['gender']) ? $udata['gender'] : ''; 
+          $industry = ''; 
+          $headline = isset($udata['description']) ? $udata['description'] : '';                
+          
+          // check if profileid and provider doesnt exist 
+          if( (bool) db_select('cz_card')->fields('cz_card', array('id'))->condition('profileid', $udata['id'], '=')->condition('provider','facebook', '=')->range(0, 1)->execute()->fetchField() ) { 
+            // profile already exist.. 
+
+          } else { 
+            
+            $rs = db_query("insert into {cz_card} ( `firstname`, `lastname`, `fullname`, `username`, `email`, `address`, `country`, `organization`, `phone`, `picture`, `profileid`, `profileurl`, `gender`, `industry`, `headline`, `created`, provider, uid) VALUES (:firstname, :lastname, :fullname, :username, :email, :address, :country, :organization, :phone, :picture, :profileid, :profileurl, :gender, :industry, :headline, :created, :provider, :uid)  ", array(':firstname'=>$firstname, ':lastname'=>$lastname, ':fullname'=>$fullname, ':username'=>$username, ':email'=>$email, ':address'=>$address, ':country'=>$country, ':organization'=>$organization, ':phone'=>$phone, ':picture'=>$picture, ':profileid'=>$profileid, ':profileurl'=>$profileurl, ':gender'=>$gender, ':industry'=>$industry, ':headline'=>$headline, ':created'=>$created, ':provider'=>$providername, ':uid'=>$uid) ); 
+            if($rs) {
+              $ic++; 
+            } 
+          }
+          } // end udata 
+
+        } 
+
+        
+        
+      } 
+      
+    } else { 
+      $out .= 'Account is not connnected..';
+    } 
+  
+  $out .= $ic.' unique contacts imported.' ;
+
+  $out .= '<br/>'.l('View Imported Contacts', 'user/'.$user->uid.'/icontacts'); 
+  
+  return $out; 
+}
 
 function cz_custom_import_from_facebook() {
    global $user; 
@@ -230,19 +342,19 @@ function cz_custom_import_from_linkedin() {
               $firstname  =  $udata['firstName']; 
               $lastname = $udata['lastName']; 
               $fullname = $udata['firstName'].' '.$udata['lastName'];  
-              $username = '';  
+              $username = isset($udata['id']) ? $udata['id'] : '';   
               $email = ''; 
               $address = isset($udata['location']['name']) ? $udata['location']['name'] : ''; 
               $country = isset($udata['location']['country']['code']) ? $udata['location']['country']['code'] : ''; 
               $organization = ''; 
               $phone = ''; 
               $picture = isset($udata['pictureUrl']) ? $udata['pictureUrl'] : ''; 
-              $profileid = $udata['id']; 
+              $profileid = isset($udata['id']) ? $udata['id'] : ''; 
               $profileurl = isset($udata['siteStandardProfileRequest']['url']) ? $udata['siteStandardProfileRequest']['url'] : ''; 
               //isset($udata['apiStandardProfileRequest']['url']) ? $udata['apiStandardProfileRequest']['url'] : (); 
               $gender = ''; 
               $industry = isset($udata['industry']) ? $udata['industry'] : ''; 
-              $headline = ''; 
+              $headline = isset($udata['headline']) ? $udata['headline'] : ''; 
               
               // check if profileid and provider doesnt exist 
               if( (bool) db_select('cz_card')->fields('cz_card', array('id'))->condition('profileid', $udata['id'], '=')->condition('provider','linkedin', '=')->range(0, 1)->execute()->fetchField() ) { 
@@ -489,6 +601,8 @@ function card_view($account) {
   $header = array(
     'picture' => array('data' => t('')),
     'fullname' => array('data' => t('Name'), 'field' => 'cz.fullname'),
+    'headline' => array('data' => t('Title'), 'field' => 'cz.headline'),
+    'industry' => array('data' => t('Industry'), 'field' => 'cz.industry'),
     'profileurl' => array('data' => t('Location'), 'field' => 'cz.profileurl'), 
     'member_for' => array('data' => t('Added'), 'field' => 'cz.created', 'sort' => 'desc'),
     'operations' => array('data' => t('Operations')),
@@ -499,7 +613,7 @@ function card_view($account) {
   
   $query = $query->extend('PagerDefault')->extend('TableSort');
   $query
-    ->fields('cz', array('picture', 'profileurl', 'id', 'fullname', 'address', 'created'))
+    ->fields('cz', array('picture', 'headline', 'industry', 'organization', 'profileurl', 'id', 'fullname', 'address', 'created'))
     ->limit(50)
     ->orderByHeader($header)
     ->setCountQuery($count_query); 
@@ -507,7 +621,7 @@ function card_view($account) {
   $rows = array(); 
    foreach ($result as $account) { 
      
-     $rows[] = array('<img src="'.$account->picture.'" />', '<a href="'.$account->profileurl.'" target="_blank">'.$account->fullname.'</a>', $account->address, format_interval(REQUEST_TIME - $account->created), '');   // profileurl 
+     $rows[] = array('<img src="'.$account->picture.'" />', '<a href="'.$account->profileurl.'" target="_blank">'.$account->fullname.'</a>', $account->headline, $account->industry, $account->address, format_interval(REQUEST_TIME - $account->created), '');   // profileurl 
    } 
   
   $out .= theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => 'user_card'))); 
