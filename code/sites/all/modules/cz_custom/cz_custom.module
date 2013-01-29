@@ -5,6 +5,22 @@ function cz_custom_init() {
   
 }
 
+function cz_custom_menu_alter(&$items) {
+    // Change the title of user profile pages 
+    $items['user']['title callback'] = 'cz_custom_user_page_title';
+}
+
+function cz_custom_user_page_title() {
+  global $user; 
+  if(arg(1)== 'register')
+    return 'Register'; 
+   
+  if(arg(1)== 'login')
+    return 'Sign in'; 
+  
+   return user_is_logged_in() ? t('My account') : t('User account'); 
+}
+
  function cz_custom_menu() {
     $items['oimport/linkedin'] = array(
       'title' => 'Import from Linked-in',
@@ -49,7 +65,9 @@ function cz_custom_import_from_facebook() {
    global $user; 
    
     $out = ''; 
-     
+     // delete existing of this user .. 
+    db_query("delete from {cz_card} where uid = :uid and provider = :provider", array(':provider'=>'facebook', ':uid' => $user->uid)); 
+
     $out .= ''; 
     $provider = oauthconnector_provider_load('facebook');
     $csid = $provider->csid; 
@@ -108,19 +126,19 @@ function cz_custom_import_from_facebook() {
           $created = time(); 
           $uid = $user->uid; 
 
-          $firstname  =  $udata['first_name']; 
-          $lastname = $udata['last_name']; 
-          $fullname = $udata['name'];  
-          $username = $udata['username']; 
+          $firstname  =  isset($udata['first_name']) ? $udata['first_name'] : ''; 
+          $lastname = isset($udata['last_name']) ? $udata['last_name'] : ''; 
+          $fullname = isset( $udata['name']) ? $udata['name'] : '';  
+          $username = isset($udata['username']) ? $udata['username'] : ''; 
           $email = ''; 
           $address = ''; 
           $country = ''; 
           $organization = ''; 
           $phone = ''; 
           $picture = ''; 
-          $profileid = $udata['id'];  
-          $profileurl = $udata['link']; 
-          $gender = $udata['gender']; 
+          $profileid = isset($udata['id']) ? $udata['id'] : '';  
+          $profileurl = isset($udata['link']) ? $udata['link'] : ''; 
+          $gender = isset($udata['gender']) ? $udata['gender'] : ''; 
           $industry = ''; 
           $headline = '';                 
           
@@ -136,7 +154,6 @@ function cz_custom_import_from_facebook() {
             } 
           }
           } // end udata 
-
 
         } 
 
@@ -158,13 +175,21 @@ function cz_custom_import_from_linkedin() {
     global $user; 
 
     $out = '';
-
-    $out .= ''; 
+      // delete existing of this user .. 
+    db_query("delete from {cz_card} where uid = :uid and provider = :provider", array(':provider'=>'linkedin', ':uid' => $user->uid)); 
     
-     $result = db_query("SELECT * FROM {oauth_common_token} WHERE uid = :uid AND type = :type", array(
+    $out .= ''; 
+     // ??? 
+     $provider = oauthconnector_provider_load('linkedin');
+     $csid = $provider->csid;
+
+     $result = db_query("SELECT * FROM {oauth_common_token} WHERE uid = :uid AND type = :type and csid = :csid", array(
         ':uid' => $user->uid,
         ':type' => OAUTH_COMMON_TOKEN_TYPE_ACCESS,
-      ));
+        ':csid' => $provider->csid,
+      )); 
+
+      
       $tokens = array();
       while ($token = DrupalOAuthToken::fromResult($result)) {
         $tokens[] = $token;
@@ -175,7 +200,7 @@ function cz_custom_import_from_linkedin() {
     $ltoken = $tokens[0]; 
     // print_r( $ltoken); 
     if($ltoken)  { 
-   $consumer = $ltoken->consumer;
+   $consumer = $ltoken->consumer; 
     $provider = oauthconnector_provider_load('linkedin');
     $method='GET'; 
      //print_r($provider); 
@@ -251,7 +276,9 @@ function cz_custom_import_from_gmail() {
    global $user;
 
     $out = '';
-     
+     // delete existing of this user .. 
+    db_query("delete from {cz_card} where uid = :uid and provider = :provider", array(':provider'=>'google', ':uid' => $user->uid)); 
+
     $out .= ''; 
     $provider = oauthconnector_provider_load('google');
     $csid = $provider->csid;
@@ -335,7 +362,8 @@ function cz_custom_import_from_gmail() {
           $headline = '';                 
           
           // check if profileid and provider doesnt exist 
-          if( (bool) db_select('cz_card')->fields('cz_card', array('id'))->condition('profileid', $cemail, '=')->condition('provider','google', '=')->range(0, 1)->execute()->fetchField() ) { 
+          if( (bool) db_select('cz_card')->fields('cz_card', array('id'))->condition('uid', $user->uid, '=')->condition('profileid', $cemail, '=')->condition('provider','google', '=')->range(0, 1)->execute()->fetchField() ) { 
+            //include uid as well ..  
             // profile already exist.. 
 
           } else { 
@@ -459,8 +487,9 @@ function card_view($account) {
   $query->condition('cz.uid', $account->uid, '=');
   
   $header = array(
+    'picture' => array('data' => t('')),
     'fullname' => array('data' => t('Name'), 'field' => 'cz.fullname'),
-    'profileurl' => array('data' => t('URL'), 'field' => 'cz.profileurl'), 
+    'profileurl' => array('data' => t('Location'), 'field' => 'cz.profileurl'), 
     'member_for' => array('data' => t('Added'), 'field' => 'cz.created', 'sort' => 'desc'),
     'operations' => array('data' => t('Operations')),
   ); 
@@ -470,14 +499,15 @@ function card_view($account) {
   
   $query = $query->extend('PagerDefault')->extend('TableSort');
   $query
-    ->fields('cz', array('id', 'fullname', 'profileurl', 'created'))
+    ->fields('cz', array('picture', 'profileurl', 'id', 'fullname', 'address', 'created'))
     ->limit(50)
     ->orderByHeader($header)
     ->setCountQuery($count_query); 
   $result = $query->execute();
   $rows = array(); 
    foreach ($result as $account) { 
-     $rows[] = array($account->fullname, $account->profileurl, format_interval(REQUEST_TIME - $account->created), '');      
+     
+     $rows[] = array('<img src="'.$account->picture.'" />', '<a href="'.$account->profileurl.'" target="_blank">'.$account->fullname.'</a>', $account->address, format_interval(REQUEST_TIME - $account->created), '');   // profileurl 
    } 
   
   $out .= theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => 'user_card'))); 

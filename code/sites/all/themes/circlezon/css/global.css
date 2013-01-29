@@ -6,7 +6,7 @@ nav.navigation {
 	position: absolute;
 	right: 0;
 	top: 30px;
-	width: 50%;
+	width: 58%;
 	z-index:1;
 } 
 
@@ -156,17 +156,25 @@ a{
   top:5px; 
 } 
 
-.page-user #region-sidebar-first, .page-user #breadcrumb, .page-user  #region-content .tabs, .page-user  #region-content .block-menu-menu-menu-top  {
+.page-user #region-sidebar-first, .page-user #breadcrumb, .not-logged-in.page-user  #region-content .tabs, .page-user  #region-content .block-menu-menu-menu-top  {
   display:none; 
 } 
 .page-user #block-block-8 {
   display:none; 
 } 
-#main-menu li a {
+.page-user #section-content { 
+  background:none; 
+}
+#main-menu li a , #secondary-menu  li a{
   color:white; 
 } 
+.page-user-login #region-content .region-content-inner, .page-user-register #region-content .region-content-inner{ 
+  width:500px; 
+  margin-left:auto;
+  margin-right:auto; 
+} 
 #connector-button-form .connector-button-wrapper {
-  float:left; 
+  
   margin-right:10px; 
 } 
 .oauthconnector-facebook input{
@@ -186,8 +194,8 @@ a{
     color: transparent;
     height: 17px;
     text-shadow: 0 0;
-    width: 0;
-}
+    width: 21px;
+} 
 .oauthconnector-linkedin input {
     background: url("../images/linkedin1.jpg") no-repeat scroll transparent;
     border: 0 none;
@@ -195,7 +203,7 @@ a{
     color: transparent;
     height: 17px;
     text-shadow: 0 0;
-    width: 0;
+    width: 22px;
 }
 .oauthconnector-google input {
     background: url("../images/social-icons.gif") repeat scroll 3px -71px transparent;
@@ -204,8 +212,9 @@ a{
     color: transparent;
     height: 17px;
     text-shadow: 0 0;
-    width: 0;
-}
+    width: 22px;
+} 
+
 form#user-login div#edit-actions input{
     background: url("../images/social-icons.gif") repeat scroll -49px 142px transparent;
     border: 0 none;
@@ -225,6 +234,49 @@ form#user-register-form div#edit-actions input{
     width: 142px;
 }
 form#connector-button-form div{
-width:205px;
-float:left;
+  
+}
+#user-register-form .form-item .description , #user-login .form-item .description, #user-register-form .password-strength  {
+  display:none; 
+} 
+#user-login .form-item , #user-register-form .form-item{
+  clear:both;  
+  overflow:auto; 
+}
+
+#user-login .form-item label{
+  width:110px; 
+  float:left; 
+  text-align:right; 
+} 
+#user-register-form .form-item label {
+  width:150px; 
+  float:left; 
+  text-align:right; 
+} 
+#user-login .form-item input, #user-register-form .form-item input{
+  width:258px; 
+  float:left; 
+  margin-left:10px; 
+} 
+#user-login #edit-actions{
+  margin-left:120px; 
+} 
+#user-register-form #edit-actions {
+  margin-left:160px; 
+} 
+#user-register-form div.password-confirm { 
+  display:none; 
+} 
+
+#secondary-menu {
+  float:left; 
+}
+#main-menu {
+  float:left; 
+}
+
+#main-menu.clearfix:after {
+  float:left;  
+
 }
