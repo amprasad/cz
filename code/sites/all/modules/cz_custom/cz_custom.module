@@ -365,6 +365,7 @@ function cz_custom_import_from_linkedin() {
       $ic = 0; 
        // http://developer.linkedin.com/documents/reading-data#toggleview:id=php  
       $ldata = drupal_json_decode($org_info); 
+	  //print_r($ldata);exit;
       if( $ldata && $ldata['_total'] ) {         
 
         if( is_array($ldata['values']) && count($ldata['values']) > 0 ) {
@@ -706,17 +707,32 @@ function card_view($account) {
   $query = $query->extend('PagerDefault')->extend('TableSort');
   $query
     ->fields('cz', array('picture', 'headline', 'industry', 'organization', 'profileurl', 'id', 'fullname', 'address', 'created'))
-    ->limit(50)
+    ->limit(20)
     ->orderByHeader($header)
     ->setCountQuery($count_query); 
   $result = $query->execute();
   $rows = array(); 
+  $out .= '<div class = "contact_grid_container" >';
    foreach ($result as $account) { 
-     
-     $rows[] = array('<img src="'.$account->picture.'" />', '<a href="'.$account->profileurl.'" target="_blank">'.$account->fullname.'</a>', $account->headline, $account->industry, $account->address, format_interval(REQUEST_TIME - $account->created), '');   // profileurl 
+     $pic =  $account->picture;
+     if($pic == NULL || $pic == '') {
+        $image = '<img src ="' . base_path() . 'sites/all/themes/circlezon/images/profile_placeholder.png'.'"/>'; 
+     }
+     else {
+        $image = '<img class = "contact_picture" src="'. $pic .'" />'; 
+     }
+     $out .= '<div class="contact_container">';
+     $out .= '<div class="contact_data">' . $image . '</div>';
+     $out .= '<div class="contact_data">'.'<a href="'.$account->profileurl.'" target="_blank">'.$account->fullname.'</a>'.'</div>';
+     $out .= '<div class="contact_data contact_data_bold">' . $account->headline . '</div>';
+     $out .= '<div class="contact_data contact_data_bold">' . $account->industry . '</div>';
+     $out .= '<div class="contact_data">' . $account->address . '</div>';
+     $out .= '</div>';
+     //$rows[] = array('<img src="'.$account->picture.'" />', '<a href="'.$account->profileurl.'" target="_blank">'.$account->fullname.'</a>', $account->headline, $account->industry, $account->address, format_interval(REQUEST_TIME - $account->created), '');   // profileurl 
    } 
+   $out .= '</div>';
   
-  $out .= theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => 'user_card'))); 
+  //$out .= theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => 'user_card'))); 
   
   $out .= theme('pager');
 
