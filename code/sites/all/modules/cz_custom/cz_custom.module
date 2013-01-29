@@ -8,16 +8,32 @@ function cz_custom_init() {
 function cz_custom_menu_alter(&$items) {
     // Change the title of user profile pages 
     $items['user']['title callback'] = 'cz_custom_user_page_title';
+    $items['user/%user']['title callback'] = 'cz_custom_login_user_page_title';
+} 
+
+function cz_custom_login_user_page_title($account) { 
+  if( is_numeric(arg(1)) && arg(2) == '' && $account->uid ) {
+    return 'My account';  
+  } else if( arg(2) == 'icontacts' ) {
+    return 'My Contacts'; 
+  } 
+
+  return is_object($account) ? format_username($account) : '';
 }
 
 function cz_custom_user_page_title() {
   global $user; 
+  
+  if(arg(1)== '' && $user->uid ) {
+    return 'My account';  
+  } 
+  
   if(arg(1)== 'register')
     return 'Register'; 
    
   if(arg(1)== 'login')
     return 'Sign in'; 
-  
+   
    return user_is_logged_in() ? t('My account') : t('User account'); 
 }
 
@@ -28,6 +44,13 @@ function cz_custom_user_page_title() {
       'access arguments' => array('access content'), 
       'type' => MENU_CALLBACK,
     );
+    $items['icontacts'] = array( 
+      'title' => 'My Contacts',
+      'page callback' => 'user_card_page',
+      'access callback' => 'user_is_logged_in',
+      'weight' => 6, 
+      'menu_name' => 'user-menu', 
+    ); 
 
     $items['user/%user/icontacts'] = array( 
       'title' => 'My Contacts',
@@ -40,7 +63,7 @@ function cz_custom_user_page_title() {
       // user account pages, the preferred menu link that is used to build the
       // active trail (breadcrumb) will be found in this menu (unless there is
       // more specific link), so the link to 'user' will not be in the breadcrumb.
-      'type' => MENU_LOCAL_TASK,
+      'type' => MENU_LOCAL_TASK, 
     ); 
     
     $items['oimport/facebook'] = array(
@@ -650,7 +673,13 @@ function cz_oauthconnector_endpoint_call($endpoint, $params=array(), $provider, 
   return $return;
 }
 
-function user_card_page ($account) {
+function user_card_page ($account = null) {
+  global $user; 
+  
+  if($account == null) { 
+    $account = $user; 
+  } 
+  
   return is_object($account) ? card_view($account) : MENU_NOT_FOUND;
 }
 
