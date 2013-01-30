@@ -1,6 +1,5 @@
 <div class="contact_grid_container">
 	<?php foreach ($data as $account) {
-		dpm($account);
   	$pic =  $account->picture;
   	if($pic == NULL || $pic == '') {
     	$image = '<img src ="' . base_path() . 'sites/all/themes/circlezon/images/profile_placeholder.png'.'"/>'; 
@@ -22,6 +21,9 @@
       </div>
       <div class="contact_data">
       	<?php $account->address; ?>
+      </div>
+      <div class="widget-favorite">
+      	<?php print widgets_get_favorite_widget($account->id, $account->is_favorite); ?>
       </div>
     </div>
   <?php } ?> 

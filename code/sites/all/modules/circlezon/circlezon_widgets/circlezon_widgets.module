@@ -1,2 +1,48 @@
 <?php
 
+function circlezon_widgets_menu() {
+	$items['widgets/favorite/%/%'] = array(
+		'page callback' => 'widgets_favorite',
+		'access callback' => TRUE,
+		'type' => MENU_CALLBACK,
+	);
+}
+
+function widgets_favorite(){
+  global $user;
+  $card_id = $_GET['card_id'];
+  $is_favorite = $_GET['is_favorite'];
+
+  if ($is_favorite){
+	  db_update('cz_card')
+	    ->condition('id', $card_id);
+	    ->fields(array(
+	    	'widget_favorite' => 1,
+	    ))
+	    ->execute();
+
+  } else {
+		db_update('cz_card')
+	    ->condition('id', $card_id);
+	    ->fields(array(
+	    	'widget_favorite' => 0,
+	   	))
+	    ->execute();
+  }
+
+  
+  $commands = array();
+    
+  $commands[] = ajax_command_remove('.widget-favorite-' . $card_id);
+    
+  return array(
+    '#type' => 'ajax',
+    '#commands' => $commands,
+  );
+}
+
+function widgets_get_favorite_widget($card_id, $is_favorite){
+	$label = $is_favorite ? 'Remove from favorite' : 'Add to favorite';
+	$query = array('card_id' => $card_id, 'is_favorite' => $is_favorite);
+	return '<div class="widget-favorite-'.$card_id.'">'.l(t($label), 'widgets/favorite', array('attributes' => array('class' => 'use-ajax'), 'query' => $query)).'</div>';
+}

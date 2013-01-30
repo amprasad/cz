@@ -90,7 +90,8 @@ function user_card_page($account = null) {
  * Main card display function
  */
 function card_view($account, $card_theme = 'card_default') {
-  $out = '';
+  // Make sure Drupal Ajax framework javascript is around for the widgets
+  drupal_add_library('system', 'drupal.ajax');
   
   //@todo  cz_card  
   $query = db_select('cz_card', 'cz');
@@ -104,6 +105,7 @@ function card_view($account, $card_theme = 'card_default') {
     'profileurl' => array('data' => t('Location'), 'field' => 'cz.profileurl'), 
     'member_for' => array('data' => t('Added'), 'field' => 'cz.created', 'sort' => 'desc'),
     'operations' => array('data' => t('Operations')),
+    'widget_favorite' => array('data' => t('Favorite'), 'field' => 'cz.widget_favorite'),
   ); 
   
   $count_query = clone $query;
@@ -111,18 +113,14 @@ function card_view($account, $card_theme = 'card_default') {
   
   $query = $query->extend('PagerDefault')->extend('TableSort');
   $query
-    ->fields('cz', array('picture', 'headline', 'industry', 'organization', 'profileurl', 'id', 'fullname', 'address', 'created'))
+    ->fields('cz', array('picture', 'headline', 'industry', 'organization', 'profileurl', 'id', 'fullname', 'address', 'created', 'widget_favorite'))
     ->limit(20)
     ->orderByHeader($header)
     ->setCountQuery($count_query);
   $result = $query->execute();
   $rows = array();
 
-  $out .= theme($card_theme, array('data' => $result));
-  
-  $out .= theme('pager');
-
-  return $out; 
+  return theme($card_theme, array('data' => $result)) . theme('pager'); 
 }
 
 /**
