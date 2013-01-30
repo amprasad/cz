@@ -297,8 +297,11 @@ form#connector-button-form div{
 }
 
 .contact_grid_container {
-    width: 1000px;
+    width: 100%;
 }
+.contact_grid_container .row {
+  clear:left; 
+} 
 .contact_data_bold {
     font-weight: bold;
 }

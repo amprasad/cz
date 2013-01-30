@@ -64,11 +64,7 @@ function cz_custom_user_page_title() {
       'page arguments' => array(1),
       'access callback' => 'user_view_access',
       'access arguments' => array(1),
-      // By assigning a different menu name, this item (and all registered child
-      // paths) are no longer considered as children of 'user'. When accessing the
-      // user account pages, the preferred menu link that is used to build the
-      // active trail (breadcrumb) will be found in this menu (unless there is
-      // more specific link), so the link to 'user' will not be in the breadcrumb.
+      
       'type' => MENU_LOCAL_TASK, 
     ); 
     
