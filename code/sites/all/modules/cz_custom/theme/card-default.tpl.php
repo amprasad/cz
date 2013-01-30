@@ -23,7 +23,7 @@
       	<?php $account->address; ?>
       </div>
       <div class="widget-favorite">
-      	<?php print widgets_get_favorite_widget($account->id, $account->is_favorite); ?>
+      	<?php print widgets_get_favorite_widget($account->id, $account->widget_favorite); ?>
       </div>
     </div>
   <?php } ?> 

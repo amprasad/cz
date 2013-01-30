@@ -104,8 +104,8 @@ function card_view($account, $card_theme = 'card_default') {
     'industry' => array('data' => t('Industry'), 'field' => 'cz.industry'),
     'profileurl' => array('data' => t('Location'), 'field' => 'cz.profileurl'), 
     'member_for' => array('data' => t('Added'), 'field' => 'cz.created', 'sort' => 'desc'),
-    'operations' => array('data' => t('Operations')),
     'widget_favorite' => array('data' => t('Favorite'), 'field' => 'cz.widget_favorite'),
+    'operations' => array('data' => t('Operations')),
   ); 
   
   $count_query = clone $query;
