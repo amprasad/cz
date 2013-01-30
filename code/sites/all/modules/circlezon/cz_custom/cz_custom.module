@@ -63,8 +63,7 @@ function cz_custom_user_page_title() {
       'page callback' => 'user_card_page',
       'page arguments' => array(1),
       'access callback' => 'user_view_access',
-      'access arguments' => array(1),
-      
+      'access arguments' => array(1),       
       'type' => MENU_LOCAL_TASK, 
     ); 
     
@@ -115,7 +114,14 @@ function card_view($account, $card_theme = 'card_default') {
     ->setCountQuery($count_query);
   $result = $query->execute();
   $rows = array();
-
+  
+  // add css, js for card page 
+  drupal_add_js(drupal_get_path('module', 'cz_custom') . '/theme/excanvas.compiled.js');
+  drupal_add_js(drupal_get_path('module', 'cz_custom') . '/theme/jquery.flippy.min.js'); 
+  drupal_add_js(drupal_get_path('module', 'cz_custom') . '/theme/cz_custom.js'); 
+  
+  drupal_add_css(drupal_get_path('module', 'cz_custom') . '/theme/cz_custom.css');
+  
   return theme($card_theme, array('data' => $result)) . theme('pager'); 
 }
 

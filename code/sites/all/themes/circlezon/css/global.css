@@ -281,30 +281,7 @@ form#connector-button-form div{
 
 }
 
-/* Linked Contact Import Grid */
 
-.contact_container {
-    border: 1px solid grey;
-    border-radius: 10px;
-    float: left;
-    margin: 20px;
-    min-height: 230px;
-    padding: 10px 9px;
-    width: 175px;
-}
-.contact_data {
-    text-align: center;
-}
-
-.contact_grid_container {
-    width: 100%;
-}
-.contact_grid_container .row {
-  clear:left; 
-} 
-.contact_data_bold {
-    font-weight: bold;
-}
 /*pager previous*/
 .pager li.pager-previous a {
     padding: 4px 5px;

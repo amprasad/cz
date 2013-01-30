@@ -1,0 +1,41 @@
+/* Linked Contact Import Grid */
+
+.contact_container {
+   /* border: 1px solid grey; */
+   margin: 20px;   
+   
+    float: left;
+    
+}
+.contact_data {
+    text-align: center;
+}
+
+.contact_grid_container {
+    width: 100%;
+}
+.contact_grid_container .row {
+  clear:left; 
+} 
+.contact_data_bold {
+    font-weight: bold;
+}
+
+.card_front{
+	background: #4484D4;
+	border-radius: 10px; 
+    min-height: 280px;
+    padding: 10px 9px;
+    width: 175px;
+} 
+
+#flippyBox .top{
+	padding:5px;
+}
+
+
+#flippyButtons{
+	text-align: center;
+	line-height: 20px;
+	margin-top: 20px;
+}
