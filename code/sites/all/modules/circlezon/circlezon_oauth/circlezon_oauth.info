@@ -1,0 +1,6 @@
+name = CircleZon oAuth
+description = Custom oAuth importing handler
+core = 7.x
+dependencies[] = oauth_common
+version = "7.x-1.3"
+package = "CircleZon"

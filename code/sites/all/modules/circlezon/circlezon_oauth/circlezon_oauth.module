@@ -1,0 +1,115 @@
+<?php
+
+/**
+ *  Implements hook_menu()
+ */
+function circlezon_oauth_menu() {
+    $items['oimport/linkedin'] = array(
+      'title' => 'Import from Linked-in',
+      'page callback' => 'cz_custom_import_from_linkedin',
+      'access arguments' => array('access content'), 
+      'type' => MENU_CALLBACK,
+    );
+
+    $items['oimport/facebook'] = array(
+      'title' => 'Import from Facebook',
+      'page callback' => 'cz_custom_import_from_facebook',
+      'access arguments' => array('access content'), 
+      'file' => 'includes/oimport_functions.inc',
+      'type' => MENU_CALLBACK,
+    );
+
+    $items['oimport/google'] = array(
+      'title' => 'Import from Google',
+      'page callback' => 'cz_custom_import_from_google',
+      'access arguments' => array('access content'), 
+      'file' => 'includes/oimport_functions.inc',
+      'type' => MENU_CALLBACK,
+    );
+    
+    $items['oimport/twitter'] = array(
+      'title' => 'Import from Twitter',
+      'page callback' => 'cz_custom_import_from_twitter',
+      'access arguments' => array('access content'), 
+      'file' => 'includes/oimport_functions.inc',
+      'type' => MENU_CALLBACK, 
+    ); 
+    
+    return $items;
+}
+
+/**
+ * Endpoint Call.
+ *
+ * Use this to post on twitter, get a profile, search in Facebook... and many more.
+ * You need a $provider, and a access token, that is it... supports both oauth and oauth2.
+ */
+function cz_oauthconnector_endpoint_call($endpoint, $params=array(), $provider, $access_token, $method='GET', $format='RAW') {
+  $consumer = DrupalOAuthConsumer::loadById($provider->csid, FALSE); 
+  $auth = NULL;
+
+  if (!$consumer->configuration['oauth2']) {
+    $sig_method = DrupalOAuthClient::signatureMethod(substr(strtolower($provider->consumer_advanced['signature method']), 5));
+    $realm = empty($provider->consumer_advanced['authentication realm']) ? NULL : $provider->consumer_advanced['authentication realm'];
+    $auth = new HttpClientOAuth($consumer, $access_token, $sig_method, TRUE, TRUE, $realm);
+  }
+  if ($consumer->configuration['oauth2'] && isset($access_token->key)) {
+    $params['access_token'] = $access_token->key;
+  }
+  $data = NULL;
+  if (isset($params['post_data'])) {
+    $data = $params['post_data'];
+    unset ($params['post_data']);
+  }
+
+  switch (strtolower($format)) {
+    case 'xml':
+      $formatter = new HttpClientXMLFormatter();
+      break;
+    case 'php':
+      $formatter = new HttpClientBaseFormatter(HttpClientBaseFormatter::FORMAT_PHP);
+      break;
+    case 'json':
+      $formatter = new HttpClientBaseFormatter(HttpClientBaseFormatter::FORMAT_JSON);
+      break;
+    default:
+      $formatter = NULL;
+      break;
+  }
+  $client = new HttpClient($auth, $formatter);
+  $return = NULL;
+  ///print_r($params); 
+  try {
+    if (strtolower($method) == 'get' || strtolower($method) == 'delete') {
+      $return = $client->{strtolower($method)}($endpoint, $params);
+    }
+    elseif (strtolower($method) == 'post' || strtolower($method) == 'put') {
+      $return = $client->{strtolower($method)}($endpoint, $data, $params);
+    }
+  }
+  catch (Exception $e) {
+    if (is_a($e, 'HttpClientException')) {
+      if ($e->getCode() == 401) {
+        //TODO: Save the failure in some way so that we can stop trying to use a revoked token?
+        watchdog('oauthconnector_endpoint_call', "User !uid not authenticated for %resource: @message", array(
+          '!uid' => isset($access_token->uid) ? $access_token->uid : '\'undefined\'',
+          '%resource' => $endpoint,
+          '@message' => $e->getMessage(),
+        ), WATCHDOG_WARNING);
+      }
+      elseif ($e->getCode() == 400) {
+        watchdog('oauthconnector_endpoint_call', "Bad request of %resource: @message", array(
+          '%resource' => $endpoint,
+          '@message' => $e->getMessage(),
+        ), WATCHDOG_ERROR);
+      }
+    }
+    else {
+      watchdog('oauthconnector_endpoint_call', 'Failed to fetch of %resource: @message', array(
+        '%resource' => $endpoint,
+        '@message' => $e->getMessage(),
+      ), WATCHDOG_WARNING);
+    }
+  }
+  return $return;
+}
