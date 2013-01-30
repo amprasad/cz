@@ -2,7 +2,19 @@
 
 function cz_custom_init() {
   global $user; 
-  
+}
+
+/**
+ * Implements hook_theme()
+ * Define the various theme templates to be applied to the cards
+ */
+function cz_custom_theme(){
+  return array(
+    'card_default' => array(
+      'variables' => array('data' => NULL),
+      'template' => 'theme/card-default',
+    ),
+  );
 }
 
 function cz_custom_menu_alter(&$items) {
@@ -63,6 +75,7 @@ function cz_custom_user_page_title() {
     return $items;
 }
 
+// Callback for the user account page
 function user_card_page($account = null) {
   global $user; 
   
@@ -73,7 +86,10 @@ function user_card_page($account = null) {
   return is_object($account) ? card_view($account) : MENU_NOT_FOUND;
 }
 
-function card_view($account) {
+/**
+ * Main card display function
+ */
+function card_view($account, $card_theme = 'card_default') {
   $out = '';
   
   //@todo  cz_card  
@@ -98,38 +114,20 @@ function card_view($account) {
     ->fields('cz', array('picture', 'headline', 'industry', 'organization', 'profileurl', 'id', 'fullname', 'address', 'created'))
     ->limit(20)
     ->orderByHeader($header)
-    ->setCountQuery($count_query); 
+    ->setCountQuery($count_query);
   $result = $query->execute();
-  $rows = array(); 
-  $out .= '<div class = "contact_grid_container" >';
-   foreach ($result as $account) { 
-     $pic =  $account->picture;
-     if($pic == NULL || $pic == '') {
-        $image = '<img src ="' . base_path() . 'sites/all/themes/circlezon/images/profile_placeholder.png'.'"/>'; 
-     }
-     else {
-        $image = '<img class = "contact_picture" src="'. $pic .'" />'; 
-     }
-     $out .= '<div class="contact_container">';
-     $out .= '<div class="contact_data">' . $image . '</div>';
-     $out .= '<div class="contact_data">'.'<a href="'.$account->profileurl.'" target="_blank">'.$account->fullname.'</a>'.'</div>';
-     $out .= '<div class="contact_data contact_data_bold">' . $account->headline . '</div>';
-     $out .= '<div class="contact_data contact_data_bold">' . $account->industry . '</div>';
-     $out .= '<div class="contact_data">' . $account->address . '</div>';
-     $out .= '</div>';
-     //$rows[] = array('<img src="'.$account->picture.'" />', '<a href="'.$account->profileurl.'" target="_blank">'.$account->fullname.'</a>', $account->headline, $account->industry, $account->address, format_interval(REQUEST_TIME - $account->created), '');   // profileurl 
-   } 
-   $out .= '</div>';
-  
-  //$out .= theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => array('id' => 'user_card'))); 
+  $rows = array();
+
+  $out .= theme($card_theme, array('data' => $result));
   
   $out .= theme('pager');
 
   return $out; 
-} 
+}
 
 /**
  * Implements hook_block_info().
+ * Contact import block
  */
 function cz_custom_block_info() { 
   $block['cz_import']['info'] = t('Import Contacts'); 
@@ -163,5 +161,3 @@ function cz_custom_block_view($delta) {
       break;
   }
 }
-
-

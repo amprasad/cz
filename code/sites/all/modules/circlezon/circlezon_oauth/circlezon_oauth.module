@@ -8,6 +8,7 @@ function circlezon_oauth_menu() {
       'title' => 'Import from Linked-in',
       'page callback' => 'cz_custom_import_from_linkedin',
       'access arguments' => array('access content'), 
+      'file' => 'includes/oimport_functions.inc',
       'type' => MENU_CALLBACK,
     );
 
